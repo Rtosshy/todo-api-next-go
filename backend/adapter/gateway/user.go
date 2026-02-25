@@ -2,24 +2,17 @@ package gateway
 
 import (
 	"backend/entity"
+	"backend/usecase"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
-type IUserRepository interface {
-	Create(user *entity.User) (*entity.User, error)
-	Get(userID entity.UserID) (*entity.User, error)
-	GetByEmail(email string) (*entity.User, error)
-	Save(user *entity.User) (*entity.User, error)
-	Delete(userID entity.UserID) error
-}
-
 type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) IUserRepository {
+func NewUserRepository(db *gorm.DB) usecase.IUserRepository {
 	return &userRepository{db: db}
 }
 

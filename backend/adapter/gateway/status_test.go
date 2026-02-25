@@ -4,6 +4,7 @@ import (
 	"backend/adapter/gateway"
 	"backend/entity"
 	"backend/pkg/tester"
+	"backend/usecase"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -11,7 +12,7 @@ import (
 
 type StatusRepositorySuite struct {
 	tester.DBSQLiteSuite
-	sr gateway.IStatusRepository
+	sr usecase.IStatusRepository
 }
 
 func TestStatusRepositorySuite(t *testing.T) {

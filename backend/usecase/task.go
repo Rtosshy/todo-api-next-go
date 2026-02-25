@@ -1,23 +1,14 @@
 package usecase
 
 import (
-	"backend/adapter/gateway"
 	"backend/entity"
 )
 
-type ITaskUsecase interface {
-	Create(task *entity.Task) (*entity.Task, error)
-	Get(taskID entity.TaskID, userID entity.UserID) (*entity.Task, error)
-	GetAll(userID entity.UserID) (*[]entity.Task, error)
-	Save(task *entity.Task) (*entity.Task, error)
-	Delete(taskID entity.TaskID, userID entity.UserID) error
-}
-
 type taskUsecase struct {
-	tr gateway.ITaskRepository
+	tr ITaskRepository
 }
 
-func NewTaskUsecase(tr gateway.ITaskRepository) ITaskUsecase {
+func NewTaskUsecase(tr ITaskRepository) ITaskUsecase {
 	return &taskUsecase{tr: tr}
 }
 

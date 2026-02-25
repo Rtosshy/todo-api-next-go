@@ -2,19 +2,16 @@ package gateway
 
 import (
 	"backend/entity"
+	"backend/usecase"
 
 	"gorm.io/gorm"
 )
-
-type IStatusRepository interface {
-	GetOrCreateStatus(status *entity.Status) (*entity.Status, error)
-}
 
 type statusRepository struct {
 	db *gorm.DB
 }
 
-func NewStatusRepository(db *gorm.DB) IStatusRepository {
+func NewStatusRepository(db *gorm.DB) usecase.IStatusRepository {
 	return &statusRepository{db: db}
 }
 

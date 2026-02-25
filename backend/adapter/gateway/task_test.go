@@ -4,6 +4,7 @@ import (
 	"backend/adapter/gateway"
 	"backend/entity"
 	"backend/pkg/tester"
+	"backend/usecase"
 	"errors"
 	"regexp"
 	"strings"
@@ -15,8 +16,8 @@ import (
 
 type TaskRepositorySuite struct {
 	tester.DBSQLiteSuite
-	tr gateway.ITaskRepository
-	ur gateway.IUserRepository
+	tr usecase.ITaskRepository
+	ur usecase.IUserRepository
 }
 
 func TestTaskRepositorySuite(t *testing.T) {

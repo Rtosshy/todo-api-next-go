@@ -5,6 +5,7 @@ import (
 	"backend/entity"
 	"backend/pkg"
 	"backend/pkg/tester"
+	"backend/usecase"
 	"errors"
 	"regexp"
 	"strings"
@@ -16,7 +17,7 @@ import (
 
 type UserRepositorySuite struct {
 	tester.DBSQLiteSuite
-	ur gateway.IUserRepository
+	ur usecase.IUserRepository
 }
 
 func TestUserRepositorySuite(t *testing.T) {

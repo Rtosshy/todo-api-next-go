@@ -2,24 +2,17 @@ package gateway
 
 import (
 	"backend/entity"
+	"backend/usecase"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
-type ITaskRepository interface {
-	Create(task *entity.Task) (*entity.Task, error)
-	Get(taskID entity.TaskID, userID entity.UserID) (*entity.Task, error)
-	GetAll(userID entity.UserID) (*[]entity.Task, error)
-	Save(task *entity.Task) (*entity.Task, error)
-	Delete(taskID entity.TaskID, userID entity.UserID) error
-}
-
 type taskRepository struct {
 	db *gorm.DB
 }
 
-func NewTaskRepository(db *gorm.DB) ITaskRepository {
+func NewTaskRepository(db *gorm.DB) usecase.ITaskRepository {
 	return &taskRepository{db: db}
 }
 

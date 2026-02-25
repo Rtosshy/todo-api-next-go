@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"backend/adapter/gateway"
 	"backend/entity"
 	"backend/pkg/logger"
 	"fmt"
@@ -12,16 +11,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type IUserUsecase interface {
-	SignUp(user *entity.User) (*entity.User, error)
-	Login(user *entity.User) (string, error)
-}
-
 type userUsecase struct {
-	ur gateway.IUserRepository
+	ur IUserRepository
 }
 
-func NewUserUsecase(ur gateway.IUserRepository) IUserUsecase {
+func NewUserUsecase(ur IUserRepository) IUserUsecase {
 	return &userUsecase{ur: ur}
 }
 

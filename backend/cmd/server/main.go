@@ -1,9 +1,9 @@
 package main
 
 import (
-	"backend/entity"
-	"backend/infrastructure/database"
-	"backend/infrastructure/web"
+	"backend/internal/domain"
+	"backend/internal/infra/db"
+	"backend/internal/infra/web"
 	"backend/pkg"
 	"backend/pkg/logger"
 	"context"
@@ -36,7 +36,7 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
-	if err := db.AutoMigrate(entity.NewDomains()...); err != nil {
+	if err := db.AutoMigrate(domain.NewDomains()...); err != nil {
 		logger.Fatal("Failed to migrate database: " + err.Error())
 	}
 

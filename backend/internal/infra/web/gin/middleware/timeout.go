@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/timeout"
 	"github.com/gin-gonic/gin"
 
-	"backend/internal/adapter/controller/presenter"
+	"backend/internal/infra/web/gin/presenter"
 )
 
 func TimeoutMiddleware(duration time.Duration) gin.HandlerFunc {

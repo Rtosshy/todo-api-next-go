@@ -2,9 +2,8 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/adapter/controller/presenter"
 	"backend/internal/domain"
-	"backend/internal/usecase"
+	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/logger"
 	"fmt"
 	"net/http"
@@ -13,11 +12,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type taskHandler struct {
-	tu usecase.TaskUsecase
+type TaskUsecase interface {
+	Create(task *domain.Task) (*domain.Task, error)
+	Get(taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
+	GetAll(userID domain.UserID) (*[]domain.Task, error)
+	Save(task *domain.Task) (*domain.Task, error)
+	Delete(taskID domain.TaskID, userID domain.UserID) error
 }
 
-func NewTaskHandler(tu usecase.TaskUsecase) TaskHandler {
+type taskHandler struct {
+	tu TaskUsecase
+}
+
+func NewTaskHandler(tu TaskUsecase) TaskHandler {
 	return &taskHandler{tu: tu}
 }
 

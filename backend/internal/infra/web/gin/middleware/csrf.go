@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"backend/internal/adapter/controller/presenter"
+	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
 	"net/http"

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"backend/internal/adapter/controller/presenter"
+	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/logger"
 
 	"github.com/gin-gonic/gin"

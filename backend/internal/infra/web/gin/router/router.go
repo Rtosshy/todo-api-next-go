@@ -1,10 +1,10 @@
 package router
 
 import (
-	"backend/internal/adapter/controller/handler"
-	"backend/internal/adapter/controller/middleware"
-	"backend/internal/adapter/controller/presenter"
-	"backend/internal/adapter/gateway"
+	"backend/internal/infra/db/postgres"
+	"backend/internal/infra/web/gin/handler"
+	"backend/internal/infra/web/gin/middleware"
+	"backend/internal/infra/web/gin/presenter"
 	"backend/internal/usecase"
 	"backend/pkg"
 	"backend/pkg/logger"
@@ -61,11 +61,11 @@ func NewGinRouter(db *gorm.DB, corsAllowOrigins []string) (*gin.Engine, error) {
 
 			csrfHandler := handler.NewCsrfHandler()
 
-			userRepository := gateway.NewUserRepository(db)
+			userRepository := postgres.NewUserRepository(db)
 			userUseCase := usecase.NewUserUsecase(userRepository)
 			userHandler := handler.NewUserHandler(userUseCase)
 
-			taskRepository := gateway.NewTaskRepository(db)
+			taskRepository := postgres.NewTaskRepository(db)
 			taskUseCase := usecase.NewTaskUsecase(taskRepository)
 			taskHandler := handler.NewTaskHandler(taskUseCase)
 

@@ -2,9 +2,8 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/adapter/controller/presenter"
 	"backend/internal/domain"
-	"backend/internal/usecase"
+	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
 	"net/http"
@@ -12,11 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type userHandler struct {
-	uu usecase.UserUsecase
+type UserUsecase interface {
+	SignUp(user *domain.User) (*domain.User, error)
+	Login(user *domain.User) (string, error)
 }
 
-func NewUserHandler(uu usecase.UserUsecase) UserHandler {
+type userHandler struct {
+	uu UserUsecase
+}
+
+func NewUserHandler(uu UserUsecase) UserHandler {
 	return &userHandler{uu: uu}
 }
 

@@ -1,4 +1,4 @@
-package web
+package gin
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"backend/internal/adapter/controller/router"
+	"backend/internal/infra/web/gin/router"
 	"backend/pkg/logger"
 )
 

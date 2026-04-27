@@ -2,7 +2,7 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/adapter/controller/presenter"
+	"backend/internal/infra/web/gin/presenter"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

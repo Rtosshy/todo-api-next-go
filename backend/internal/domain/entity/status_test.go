@@ -1,4 +1,4 @@
-package domain_test
+package entity_test
 
 import (
 	"backend/internal/domain"

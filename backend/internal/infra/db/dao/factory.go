@@ -1,5 +1,5 @@
 package dao
 
-func NewDomains() []any {
+func NewDAOs() []any {
 	return []any{&Status{}, &Task{}, &User{}}
 }

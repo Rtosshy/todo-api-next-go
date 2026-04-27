@@ -5,14 +5,14 @@ import (
 	"backend/internal/domain/repo"
 )
 
-type statusUsecaseImpl struct {
+type statusUsecase struct {
 	sr repo.StatusRepo
 }
 
-func NewStatusUsecase(sr repo.StatusRepo) StatusUsecase {
-	return &statusUsecaseImpl{sr: sr}
+func NewStatusUsecase(sr repo.StatusRepo) *statusUsecase {
+	return &statusUsecase{sr: sr}
 }
 
-func (su statusUsecaseImpl) GetOrCreate(status *domain.Status) (*domain.Status, error) {
+func (su *statusUsecase) GetOrCreate(status *domain.Status) (*domain.Status, error) {
 	return su.sr.GetOrCreate(status)
 }

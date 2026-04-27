@@ -12,15 +12,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type userUsecaseImpl struct {
+type userUsecase struct {
 	ur repo.UserRepo
 }
 
-func NewUserUsecase(ur repo.UserRepo) UserUsecase {
-	return &userUsecaseImpl{ur: ur}
+func NewUserUsecase(ur repo.UserRepo) *userUsecase {
+	return &userUsecase{ur: ur}
 }
 
-func (uu *userUsecaseImpl) SignUp(user *domain.User) (*domain.User, error) {
+func (uu *userUsecase) SignUp(user *domain.User) (*domain.User, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		logger.Error("Failed to hash password: " + err.Error())
@@ -35,7 +35,7 @@ func (uu *userUsecaseImpl) SignUp(user *domain.User) (*domain.User, error) {
 	return uu.ur.Create(&newUser)
 }
 
-func (uu *userUsecaseImpl) Login(user *domain.User) (string, error) {
+func (uu *userUsecase) Login(user *domain.User) (string, error) {
 	storedUser, err := uu.ur.GetByEmail(user.Email)
 	if err != nil {
 		logger.Error("GetByEmail failed: " + err.Error())
@@ -66,10 +66,10 @@ func (uu *userUsecaseImpl) Login(user *domain.User) (string, error) {
 	return tokenString, nil
 }
 
-func (uu *userUsecaseImpl) Save(user *domain.User) (*domain.User, error) {
+func (uu *userUsecase) Save(user *domain.User) (*domain.User, error) {
 	return uu.ur.Save(user)
 }
 
-func (uu *userUsecaseImpl) Delete(userID domain.UserID) error {
+func (uu *userUsecase) Delete(userID domain.UserID) error {
 	return uu.ur.Delete(userID)
 }

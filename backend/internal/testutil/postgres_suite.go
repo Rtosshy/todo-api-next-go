@@ -1,8 +1,8 @@
 package testutil
 
 import (
-	"backend/internal/domain"
 	"backend/internal/infra/db"
+	"backend/internal/infra/db/dao"
 	"backend/pkg"
 	"context"
 	"fmt"
@@ -53,7 +53,7 @@ func (suite *DBPostgresSuite) SetupSuite() {
 	db, err := database.NewDatabaseSQLFactory(database.InstancePostgres)
 	suite.Assert().Nil(err)
 	suite.DB = db
-	for _, model := range domain.NewDomains() {
+	for _, model := range dao.NewDAOs() {
 		err = suite.DB.AutoMigrate(model)
 		suite.Assert().Nil(err)
 	}

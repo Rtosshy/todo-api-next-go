@@ -1,9 +1,10 @@
 package main
 
 import (
-	"backend/internal/domain"
 	"backend/internal/infra/db"
+	"backend/internal/infra/db/dao"
 	"backend/internal/infra/web"
+	"backend/internal/infra/web/gin"
 	"backend/pkg"
 	"backend/pkg/logger"
 	"context"
@@ -31,17 +32,17 @@ func main() {
 		logger.Warn("Error loading environment file: " + envFile)
 	}
 
-	db, err := database.NewDatabaseSQLFactory(database.InstancePostgres)
+	db, err := db.NewDatabaseSQLFactory(db.InstancePostgres)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	if err := db.AutoMigrate(domain.NewDomains()...); err != nil {
+	if err := db.AutoMigrate(dao.NewDAOs()...); err != nil {
 		logger.Fatal("Failed to migrate database: " + err.Error())
 	}
 
 	config := web.NewConfigWeb()
-	server, err := web.NewGinServer(config.Host, config.Port, config.CorsAllowOrigins, db)
+	server, err := gin.NewGinServer(config.Host, config.Port, config.CorsAllowOrigins, db)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

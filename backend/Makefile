@@ -1,8 +1,12 @@
 IMAGE_TAG = todo-app-next-go-api
-OSPI_CMD = oapi-codegen --config=./adapter/controller/config.yaml ./api/openapi.yaml
+OSPI_CMD = oapi-codegen --config=./internal/adapter/controller/config.yaml ./api/openapi.yaml
+
+tools-install: ## Install development tools
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 gen: ## Generate code from openapi
-	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 	$(OSPI_CMD)
 
 external-up: ## Up external containers

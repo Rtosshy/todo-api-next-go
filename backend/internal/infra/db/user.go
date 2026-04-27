@@ -1,45 +1,45 @@
 package db
 
 import (
-	"backend/internal/domain"
-	"backend/internal/domain/repo"
+	"backend/internal/domain/entity"
+	"backend/internal/domain/repository"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
-type userRepoImpl struct {
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) repo.UserRepo {
-	return &userRepoImpl{db: db}
+func NewUserRepository(db *gorm.DB) repository.UserRepository {
+	return &userRepository{db: db}
 }
 
-func (ur *userRepoImpl) Create(user *domain.User) (*domain.User, error) {
+func (ur *userRepository) Create(user *entity.User) (*entity.User, error) {
 	if err := ur.db.Create(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (ur *userRepoImpl) Get(userID domain.UserID) (*domain.User, error) {
-	var user = domain.User{}
+func (ur *userRepository) Get(userID entity.UserID) (*entity.User, error) {
+	var user = entity.User{}
 	if err := ur.db.First(&user, userID).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (ur *userRepoImpl) GetByEmail(email string) (*domain.User, error) {
-	var user = domain.User{}
+func (ur *userRepository) GetByEmail(email string) (*entity.User, error) {
+	var user = entity.User{}
 	if err := ur.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (ur *userRepoImpl) Save(user *domain.User) (*domain.User, error) {
+func (ur *userRepository) Save(user *entity.User) (*entity.User, error) {
 	selectedUser, err := ur.Get(user.ID)
 	if err != nil {
 		return nil, err
@@ -55,8 +55,8 @@ func (ur *userRepoImpl) Save(user *domain.User) (*domain.User, error) {
 	return selectedUser, nil
 }
 
-func (ur *userRepoImpl) Delete(userID domain.UserID) error {
-	user := domain.User{ID: userID}
+func (ur *userRepository) Delete(userID entity.UserID) error {
+	user := entity.User{ID: userID}
 	if err := ur.db.Delete(&user).Error; err != nil {
 		return err
 	}

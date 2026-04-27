@@ -2,7 +2,7 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/domain"
+	"backend/internal/domain/entity"
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/logger"
 	"fmt"
@@ -13,11 +13,11 @@ import (
 )
 
 type TaskUsecase interface {
-	Create(task *domain.Task) (*domain.Task, error)
-	Get(taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
-	GetAll(userID domain.UserID) (*[]domain.Task, error)
-	Save(task *domain.Task) (*domain.Task, error)
-	Delete(taskID domain.TaskID, userID domain.UserID) error
+	Create(task *entity.Task) (*entity.Task, error)
+	Get(taskID entity.TaskID, userID entity.UserID) (*entity.Task, error)
+	GetAll(userID entity.UserID) (*[]entity.Task, error)
+	Save(task *entity.Task) (*entity.Task, error)
+	Delete(taskID entity.TaskID, userID entity.UserID) error
 }
 
 type taskHandler struct {
@@ -44,7 +44,7 @@ func deadlineToTime(d *presenter.Deadline) *time.Time {
 	return &time
 }
 
-func taskToData(task *domain.Task) presenter.Task {
+func taskToData(task *entity.Task) presenter.Task {
 	return presenter.Task{
 		Kind: "task",
 		Id:   int(task.ID),
@@ -57,14 +57,14 @@ func taskToData(task *domain.Task) presenter.Task {
 	}
 }
 
-func taskToResponse(task *domain.Task) presenter.TaskResponse {
+func taskToResponse(task *entity.Task) presenter.TaskResponse {
 	return presenter.TaskResponse{
 		ApiVersion: api.Version,
 		Data:       taskToData(task),
 	}
 }
 
-func tasksToResponse(tasks *[]domain.Task) presenter.TasksResponse {
+func tasksToResponse(tasks *[]entity.Task) presenter.TasksResponse {
 	data := make([]presenter.Task, len(*tasks))
 	for i, task := range *tasks {
 		data[i] = taskToData(&task)
@@ -75,7 +75,7 @@ func tasksToResponse(tasks *[]domain.Task) presenter.TasksResponse {
 	}
 }
 
-func getUserIDFromContext(c *gin.Context) (domain.UserID, error) {
+func getUserIDFromContext(c *gin.Context) (entity.UserID, error) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		logger.Warn("user_id not found in context")
@@ -88,7 +88,7 @@ func getUserIDFromContext(c *gin.Context) (domain.UserID, error) {
 		return 0, fmt.Errorf("invalid user_id type")
 	}
 
-	return domain.UserID(userIDFloat), nil
+	return entity.UserID(userIDFloat), nil
 }
 
 func (th *taskHandler) CreateTask(c *gin.Context) {
@@ -99,7 +99,7 @@ func (th *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	status, err := domain.NewStatus(string(requestBody.Status.Name))
+	status, err := entity.NewStatus(string(requestBody.Status.Name))
 	if err != nil {
 		logger.Warn(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
@@ -113,7 +113,7 @@ func (th *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	task := &domain.Task{
+	task := &entity.Task{
 		Name:     requestBody.Name,
 		Status:   *status,
 		UserID:   userID,
@@ -137,7 +137,7 @@ func (th *taskHandler) GetTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	taskID := domain.TaskID(id)
+	taskID := entity.TaskID(id)
 
 	task, err := th.tu.Get(taskID, userID)
 	if err != nil {
@@ -173,7 +173,7 @@ func (th *taskHandler) UpdateTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	status, err := domain.NewStatus(string(requestBody.Status.Name))
+	status, err := entity.NewStatus(string(requestBody.Status.Name))
 	if err != nil {
 		logger.Warn(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
@@ -187,9 +187,9 @@ func (th *taskHandler) UpdateTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	taskID := domain.TaskID(id)
+	taskID := entity.TaskID(id)
 
-	task := &domain.Task{
+	task := &entity.Task{
 		ID:       taskID,
 		Name:     requestBody.Name,
 		Status:   *status,
@@ -213,7 +213,7 @@ func (th *taskHandler) DeleteTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	taskID := domain.TaskID(id)
+	taskID := entity.TaskID(id)
 
 	if err := th.tu.Delete(taskID, userID); err != nil {
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))

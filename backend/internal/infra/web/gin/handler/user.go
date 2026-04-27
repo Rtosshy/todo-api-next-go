@@ -2,7 +2,7 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/domain"
+	"backend/internal/domain/entity"
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
@@ -12,8 +12,8 @@ import (
 )
 
 type UserUsecase interface {
-	SignUp(user *domain.User) (*domain.User, error)
-	Login(user *domain.User) (string, error)
+	SignUp(user *entity.User) (*entity.User, error)
+	Login(user *entity.User) (string, error)
 }
 
 type userHandler struct {
@@ -32,7 +32,7 @@ func (uh *userHandler) PostSignUp(c *gin.Context) {
 		return
 	}
 
-	user := &domain.User{
+	user := &entity.User{
 		Email:    requestBody.User.Email,
 		Password: *requestBody.User.Password,
 	}
@@ -49,7 +49,7 @@ func (uh *userHandler) PostSignUp(c *gin.Context) {
 
 	// 自動ログインのためにLoginユースケースを呼び出す
 	// 平文パスワードを持つUserオブジェクトを作成
-	loginUser := &domain.User{
+	loginUser := &entity.User{
 		Email:    createdUser.Email,
 		Password: plainPassword,
 	}
@@ -60,14 +60,14 @@ func (uh *userHandler) PostSignUp(c *gin.Context) {
 		return
 	}
 
-	sameSite, secure, domain := cookie.GetCookieConfig()
+	sameSite, secure, entity := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
 		MaxAge:   24 * 60 * 60,
 		Path:     "/",
-		Domain:   domain,
+		entity:   entity,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,
@@ -93,7 +93,7 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 		return
 	}
 
-	user := &domain.User{
+	user := &entity.User{
 		Email:    requestBody.User.Email,
 		Password: *requestBody.User.Password,
 	}
@@ -105,14 +105,14 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 		return
 	}
 
-	sameSite, secure, domain := cookie.GetCookieConfig()
+	sameSite, secure, entity := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
 		MaxAge:   24 * 60 * 60,
 		Path:     "/",
-		Domain:   domain,
+		entity:   entity,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,
@@ -121,14 +121,14 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 }
 
 func (uh *userHandler) PostLogout(c *gin.Context) {
-	sameSite, secure, domain := cookie.GetCookieConfig()
+	sameSite, secure, entity := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    "",
 		MaxAge:   -1,
 		Path:     "/",
-		Domain:   domain,
+		entity:   entity,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,

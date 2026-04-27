@@ -1,7 +1,7 @@
 package db
 
 import (
-	"backend/internal/domain"
+	"backend/internal/domain/entity"
 	"backend/internal/domain/repository"
 
 	"gorm.io/gorm"
@@ -15,8 +15,8 @@ func NewStatusRepository(db *gorm.DB) repository.StatusRepository {
 	return &statusRepository{db: db}
 }
 
-func (sr *statusRepository) GetOrCreate(status *domain.Status) (*domain.Status, error) {
-	var getOrCreateStatus domain.Status
+func (sr *statusRepository) GetOrCreate(status *entity.Status) (*entity.Status, error) {
+	var getOrCreateStatus entity.Status
 	if err := sr.db.FirstOrCreate(&getOrCreateStatus, status).Error; err != nil {
 		return nil, err
 	}

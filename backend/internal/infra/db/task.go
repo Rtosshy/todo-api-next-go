@@ -1,24 +1,24 @@
 package db
 
 import (
-	"backend/internal/domain"
-	"backend/internal/domain/repo"
+	"backend/internal/domain/entity"
+	"backend/internal/domain/repository"
 
 	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
-type taskRepo struct {
+type taskRepository struct {
 	db *gorm.DB
 }
 
-func NewTaskRepo(db *gorm.DB) repo.TaskRepo {
-	return &taskRepo{db: db}
+func NewTaskRepository(db *gorm.DB) repository.TaskRepository {
+	return &taskRepository{db: db}
 }
 
-func (tr *taskRepo) GetOrCreateStatus(task *domain.Task) error {
-	var status domain.Status
-	if err := tr.db.FirstOrCreate(&status, domain.Status{Name: task.Status.Name}).Error; err != nil {
+func (tr *taskRepository) GetOrCreateStatus(task *entity.Task) error {
+	var status entity.Status
+	if err := tr.db.FirstOrCreate(&status, entity.Status{Name: task.Status.Name}).Error; err != nil {
 		return err
 	}
 	task.StatusID = status.ID
@@ -26,7 +26,7 @@ func (tr *taskRepo) GetOrCreateStatus(task *domain.Task) error {
 	return nil
 }
 
-func (tr *taskRepo) Create(task *domain.Task) (*domain.Task, error) {
+func (tr *taskRepository) Create(task *entity.Task) (*entity.Task, error) {
 	if err := tr.GetOrCreateStatus(task); err != nil {
 		return nil, err
 	}
@@ -36,8 +36,8 @@ func (tr *taskRepo) Create(task *domain.Task) (*domain.Task, error) {
 	return task, nil
 }
 
-func (tr *taskRepo) Get(taskID domain.TaskID, userID domain.UserID) (*domain.Task, error) {
-	var task = domain.Task{}
+func (tr *taskRepository) Get(taskID entity.TaskID, userID entity.UserID) (*entity.Task, error) {
+	var task = entity.Task{}
 	if err := tr.db.Preload("Status").Preload("User").
 		Where("id = ? AND user_id = ?", taskID, userID).
 		First(&task).Error; err != nil {
@@ -46,8 +46,8 @@ func (tr *taskRepo) Get(taskID domain.TaskID, userID domain.UserID) (*domain.Tas
 	return &task, nil
 }
 
-func (tr *taskRepo) GetAll(userID domain.UserID) (*[]domain.Task, error) {
-	tasks := []domain.Task{}
+func (tr *taskRepository) GetAll(userID entity.UserID) (*[]entity.Task, error) {
+	tasks := []entity.Task{}
 	if err := tr.db.Preload("Status").Preload("User").
 		Where("user_id = ?", userID).
 		Order("created_at").
@@ -57,7 +57,7 @@ func (tr *taskRepo) GetAll(userID domain.UserID) (*[]domain.Task, error) {
 	return &tasks, nil
 }
 
-func (tr *taskRepo) Save(task *domain.Task) (*domain.Task, error) {
+func (tr *taskRepository) Save(task *entity.Task) (*entity.Task, error) {
 	selectedTask, err := tr.Get(task.ID, task.UserID)
 	if err != nil {
 		return nil, err
@@ -77,8 +77,8 @@ func (tr *taskRepo) Save(task *domain.Task) (*domain.Task, error) {
 	return selectedTask, nil
 }
 
-func (tr *taskRepo) Delete(taskID domain.TaskID, userID domain.UserID) error {
-	var task = domain.Task{}
+func (tr *taskRepository) Delete(taskID entity.TaskID, userID entity.UserID) error {
+	var task = entity.Task{}
 	if err := tr.db.Where("id = ? AND user_id = ?", taskID, userID).Delete(&task).Error; err != nil {
 		return err
 	}

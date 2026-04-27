@@ -2,7 +2,7 @@ package handler
 
 import (
 	"backend/api"
-	"backend/internal/domain/entity"
+	"backend/internal/domain"
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
@@ -12,8 +12,8 @@ import (
 )
 
 type UserUsecase interface {
-	SignUp(user *entity.User) (*entity.User, error)
-	Login(user *entity.User) (string, error)
+	SignUp(email domain.Email, password domain.PlainPassword) (*domain.User, error)
+	Login(email domain.Email, password domain.PlainPassword) (string, error)
 }
 
 type userHandler struct {
@@ -24,6 +24,22 @@ func NewUserHandler(uu UserUsecase) UserHandler {
 	return &userHandler{uu: uu}
 }
 
+func bindCredentials(emailStr string, passwordStr *string) (domain.Email, domain.PlainPassword, error) {
+	email, err := domain.NewEmail(emailStr)
+	if err != nil {
+		return domain.Email{}, domain.PlainPassword{}, err
+	}
+	pwStr := ""
+	if passwordStr != nil {
+		pwStr = *passwordStr
+	}
+	password, err := domain.NewPlainPassword(pwStr)
+	if err != nil {
+		return domain.Email{}, domain.PlainPassword{}, err
+	}
+	return email, password, nil
+}
+
 func (uh *userHandler) PostSignUp(c *gin.Context) {
 	var requestBody presenter.SignUpRequestBody
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
@@ -32,55 +48,48 @@ func (uh *userHandler) PostSignUp(c *gin.Context) {
 		return
 	}
 
-	user := &entity.User{
-		Email:    requestBody.User.Email,
-		Password: *requestBody.User.Password,
+	email, password, err := bindCredentials(requestBody.User.Email, requestBody.User.Password)
+	if err != nil {
+		logger.Warn(err.Error())
+		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
+		return
 	}
 
-	// 平文パスワードを保存（Login用）
-	plainPassword := *requestBody.User.Password
-
-	createdUser, err := uh.uu.SignUp(user)
+	createdUser, err := uh.uu.SignUp(email, password)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	// 自動ログインのためにLoginユースケースを呼び出す
-	// 平文パスワードを持つUserオブジェクトを作成
-	loginUser := &entity.User{
-		Email:    createdUser.Email,
-		Password: plainPassword,
-	}
-	tokenString, err := uh.uu.Login(loginUser)
+	tokenString, err := uh.uu.Login(email, password)
 	if err != nil {
-		logger.Error((err.Error()))
+		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	sameSite, secure, entity := cookie.GetCookieConfig()
+	sameSite, secure, cookieDomain := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
 		MaxAge:   24 * 60 * 60,
 		Path:     "/",
-		entity:   entity,
+		Domain:   cookieDomain,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,
 	})
 
-	userID := int(createdUser.ID)
+	userID := int(createdUser.ID())
 
 	c.JSON(http.StatusCreated, presenter.SignUpResponse{
 		ApiVersion: api.Version,
 		Data: presenter.User{
 			Kind:  "user",
 			Id:    &userID,
-			Email: createdUser.Email,
+			Email: createdUser.Email().String(),
 		},
 	})
 }
@@ -93,26 +102,28 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 		return
 	}
 
-	user := &entity.User{
-		Email:    requestBody.User.Email,
-		Password: *requestBody.User.Password,
+	email, password, err := bindCredentials(requestBody.User.Email, requestBody.User.Password)
+	if err != nil {
+		logger.Warn(err.Error())
+		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
+		return
 	}
 
-	tokenString, err := uh.uu.Login(user)
+	tokenString, err := uh.uu.Login(email, password)
 	if err != nil {
-		logger.Error((err.Error()))
+		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	sameSite, secure, entity := cookie.GetCookieConfig()
+	sameSite, secure, cookieDomain := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    tokenString,
 		MaxAge:   24 * 60 * 60,
 		Path:     "/",
-		entity:   entity,
+		Domain:   cookieDomain,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,
@@ -121,14 +132,14 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 }
 
 func (uh *userHandler) PostLogout(c *gin.Context) {
-	sameSite, secure, entity := cookie.GetCookieConfig()
+	sameSite, secure, cookieDomain := cookie.GetCookieConfig()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "token",
 		Value:    "",
 		MaxAge:   -1,
 		Path:     "/",
-		entity:   entity,
+		Domain:   cookieDomain,
 		Secure:   secure,
 		HttpOnly: true,
 		SameSite: sameSite,

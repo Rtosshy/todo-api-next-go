@@ -1,7 +1,7 @@
 package repository
 
-import "backend/internal/domain/entity"
+import "backend/internal/domain"
 
 type StatusRepository interface {
-	GetOrCreate(status *entity.Status) (*entity.Status, error)
+	GetOrCreate(status *domain.Status) (*domain.Status, error)
 }

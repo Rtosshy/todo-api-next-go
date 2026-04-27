@@ -2,58 +2,55 @@ package usecase
 
 import (
 	"backend/internal/domain"
-	"backend/internal/domain/repo"
+	"backend/internal/domain/repository"
 	"backend/pkg/logger"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
+var ErrInvalidCredentials = errors.New("invalid credentials")
+
 type userUsecase struct {
-	ur repo.UserRepo
+	ur repository.UserRepository
 }
 
-func NewUserUsecase(ur repo.UserRepo) *userUsecase {
+func NewUserUsecase(ur repository.UserRepository) *userUsecase {
 	return &userUsecase{ur: ur}
 }
 
-func (uu *userUsecase) SignUp(user *domain.User) (*domain.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+func (uu *userUsecase) SignUp(email domain.Email, password domain.PlainPassword) (*domain.User, error) {
+	hashed, err := password.Hash()
 	if err != nil {
 		logger.Error("Failed to hash password: " + err.Error())
 		return nil, err
 	}
-
-	newUser := domain.User{
-		Email:    user.Email,
-		Password: string(hash),
+	user, err := domain.NewUser(email, hashed)
+	if err != nil {
+		return nil, err
 	}
-
-	return uu.ur.Create(&newUser)
+	return uu.ur.Create(user)
 }
 
-func (uu *userUsecase) Login(user *domain.User) (string, error) {
-	storedUser, err := uu.ur.GetByEmail(user.Email)
+func (uu *userUsecase) Login(email domain.Email, password domain.PlainPassword) (string, error) {
+	storedUser, err := uu.ur.GetByEmail(email.String())
 	if err != nil {
 		logger.Error("GetByEmail failed: " + err.Error())
 		return "", err
 	}
 
-	logger.Info(fmt.Sprintf("storedUser: ID=%d, Email=%s", storedUser.ID, storedUser.Email))
+	logger.Info(fmt.Sprintf("storedUser: ID=%d, Email=%s", storedUser.ID(), storedUser.Email().String()))
 
-	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(user.Password))
-	if err != nil {
-		logger.Error("Password mismatch: " + err.Error())
-		return "", err
+	if !password.Matches(storedUser.Password()) {
+		logger.Error("Password mismatch")
+		return "", ErrInvalidCredentials
 	}
 
-	logger.Info(fmt.Sprintf("Creating token with user_id: %d", storedUser.ID))
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": storedUser.ID,
+		"user_id": storedUser.ID(),
 		"exp":     time.Now().Add(time.Hour * 12).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
@@ -64,12 +61,4 @@ func (uu *userUsecase) Login(user *domain.User) (string, error) {
 
 	logger.Info("Token created successfully")
 	return tokenString, nil
-}
-
-func (uu *userUsecase) Save(user *domain.User) (*domain.User, error) {
-	return uu.ur.Save(user)
-}
-
-func (uu *userUsecase) Delete(userID domain.UserID) error {
-	return uu.ur.Delete(userID)
 }

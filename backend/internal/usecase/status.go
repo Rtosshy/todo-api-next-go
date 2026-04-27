@@ -2,14 +2,14 @@ package usecase
 
 import (
 	"backend/internal/domain"
-	"backend/internal/domain/repo"
+	"backend/internal/domain/repository"
 )
 
 type statusUsecase struct {
-	sr repo.StatusRepo
+	sr repository.StatusRepository
 }
 
-func NewStatusUsecase(sr repo.StatusRepo) *statusUsecase {
+func NewStatusUsecase(sr repository.StatusRepository) *statusUsecase {
 	return &statusUsecase{sr: sr}
 }
 

@@ -1,10 +1,10 @@
 package db
 
 import (
-	"backend/internal/domain/entity"
+	"backend/internal/domain"
 	"backend/internal/domain/repository"
+	"backend/internal/infra/db/dao"
 
-	"github.com/jinzhu/copier"
 	"gorm.io/gorm"
 )
 
@@ -16,49 +16,59 @@ func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	return &userRepository{db: db}
 }
 
-func (ur *userRepository) Create(user *entity.User) (*entity.User, error) {
-	if err := ur.db.Create(user).Error; err != nil {
-		return nil, err
+func userToDAO(u *domain.User) dao.User {
+	return dao.User{
+		ID:        dao.UserID(u.ID()),
+		Email:     u.Email().String(),
+		Password:  u.Password().String(),
+		CreatedAt: u.CreatedAt(),
 	}
-	return user, nil
 }
 
-func (ur *userRepository) Get(userID entity.UserID) (*entity.User, error) {
-	var user = entity.User{}
-	if err := ur.db.First(&user, userID).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (ur *userRepository) GetByEmail(email string) (*entity.User, error) {
-	var user = entity.User{}
-	if err := ur.db.Where("email = ?", email).First(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func (ur *userRepository) Save(user *entity.User) (*entity.User, error) {
-	selectedUser, err := ur.Get(user.ID)
+func userToEntity(d *dao.User) (*domain.User, error) {
+	email, err := domain.NewEmail(d.Email)
 	if err != nil {
 		return nil, err
 	}
-
-	if err := copier.CopyWithOption(selectedUser, user, copier.Option{IgnoreEmpty: true, DeepCopy: true}); err != nil {
+	hashed, err := domain.NewHashedPassword(d.Password)
+	if err != nil {
 		return nil, err
 	}
-	if err := ur.db.Save(selectedUser).Error; err != nil {
-		return nil, err
-	}
-
-	return selectedUser, nil
+	return domain.ReconstructUser(domain.UserID(d.ID), email, hashed, d.CreatedAt), nil
 }
 
-func (ur *userRepository) Delete(userID entity.UserID) error {
-	user := entity.User{ID: userID}
-	if err := ur.db.Delete(&user).Error; err != nil {
-		return err
+func (ur *userRepository) Create(user *domain.User) (*domain.User, error) {
+	d := userToDAO(user)
+	if err := ur.db.Create(&d).Error; err != nil {
+		return nil, err
 	}
-	return nil
+	return userToEntity(&d)
+}
+
+func (ur *userRepository) Get(userID domain.UserID) (*domain.User, error) {
+	var d dao.User
+	if err := ur.db.First(&d, userID).Error; err != nil {
+		return nil, err
+	}
+	return userToEntity(&d)
+}
+
+func (ur *userRepository) GetByEmail(email string) (*domain.User, error) {
+	var d dao.User
+	if err := ur.db.Where("email = ?", email).First(&d).Error; err != nil {
+		return nil, err
+	}
+	return userToEntity(&d)
+}
+
+func (ur *userRepository) Save(user *domain.User) (*domain.User, error) {
+	d := userToDAO(user)
+	if err := ur.db.Save(&d).Error; err != nil {
+		return nil, err
+	}
+	return userToEntity(&d)
+}
+
+func (ur *userRepository) Delete(userID domain.UserID) error {
+	return ur.db.Delete(&dao.User{ID: dao.UserID(userID)}).Error
 }

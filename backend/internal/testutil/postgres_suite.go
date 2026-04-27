@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"backend/internal/infra/db"
+	database "backend/internal/infra/db"
 	"backend/internal/infra/db/dao"
 	"backend/pkg"
 	"context"

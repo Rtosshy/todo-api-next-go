@@ -1,11 +1,11 @@
 package repository
 
-import "backend/internal/domain/entity"
+import "backend/internal/domain"
 
 type TaskRepository interface {
-	Create(task *entity.Task) (*entity.Task, error)
-	Get(taskID entity.TaskID, userID entity.UserID) (*entity.Task, error)
-	GetAll(userID entity.UserID) (*[]entity.Task, error)
-	Save(task *entity.Task) (*entity.Task, error)
-	Delete(taskID entity.TaskID, userID entity.UserID) error
+	Create(task *domain.Task) (*domain.Task, error)
+	Get(taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
+	GetAll(userID domain.UserID) (*[]domain.Task, error)
+	Save(task *domain.Task) (*domain.Task, error)
+	Delete(taskID domain.TaskID, userID domain.UserID) error
 }

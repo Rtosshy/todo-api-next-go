@@ -2,14 +2,14 @@ package usecase
 
 import (
 	"backend/internal/domain"
-	"backend/internal/domain/repo"
+	"backend/internal/domain/repository"
 )
 
 type taskUsecase struct {
-	tr repo.TaskRepo
+	tr repository.TaskRepository
 }
 
-func NewTaskUsecase(tr repo.TaskRepo) *taskUsecase {
+func NewTaskUsecase(tr repository.TaskRepository) *taskUsecase {
 	return &taskUsecase{tr: tr}
 }
 

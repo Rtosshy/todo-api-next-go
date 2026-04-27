@@ -1,11 +1,11 @@
 package repository
 
-import "backend/internal/domain/entity"
+import "backend/internal/domain"
 
 type UserRepository interface {
-	Create(user *entity.User) (*entity.User, error)
-	Get(userID entity.UserID) (*entity.User, error)
-	GetByEmail(email string) (*entity.User, error)
-	Save(user *entity.User) (*entity.User, error)
-	Delete(userID entity.UserID) error
+	Create(user *domain.User) (*domain.User, error)
+	Get(userID domain.UserID) (*domain.User, error)
+	GetByEmail(email string) (*domain.User, error)
+	Save(user *domain.User) (*domain.User, error)
+	Delete(userID domain.UserID) error
 }

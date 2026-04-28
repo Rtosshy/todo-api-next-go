@@ -4,6 +4,7 @@ import (
 	"backend/internal/domain"
 	"backend/internal/domain/repository"
 	"backend/pkg/logger"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -15,14 +16,15 @@ import (
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type userUsecase struct {
+	tm TxManager
 	ur repository.UserRepository
 }
 
-func NewUserUsecase(ur repository.UserRepository) *userUsecase {
-	return &userUsecase{ur: ur}
+func NewUserUsecase(tm TxManager, ur repository.UserRepository) *userUsecase {
+	return &userUsecase{tm: tm, ur: ur}
 }
 
-func (uu *userUsecase) SignUp(email domain.Email, password domain.PlainPassword) (*domain.User, error) {
+func (uu *userUsecase) SignUp(ctx context.Context, email domain.Email, password domain.PlainPassword) (*domain.User, error) {
 	hashed, err := password.Hash()
 	if err != nil {
 		logger.Error("Failed to hash password: " + err.Error())
@@ -32,11 +34,11 @@ func (uu *userUsecase) SignUp(email domain.Email, password domain.PlainPassword)
 	if err != nil {
 		return nil, err
 	}
-	return uu.ur.Create(user)
+	return uu.ur.Create(ctx, user)
 }
 
-func (uu *userUsecase) Login(email domain.Email, password domain.PlainPassword) (string, error) {
-	storedUser, err := uu.ur.GetByEmail(email.String())
+func (uu *userUsecase) Login(ctx context.Context, email domain.Email, password domain.PlainPassword) (string, error) {
+	storedUser, err := uu.ur.GetByEmail(ctx, email.String())
 	if err != nil {
 		logger.Error("GetByEmail failed: " + err.Error())
 		return "", err

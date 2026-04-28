@@ -5,6 +5,7 @@ import (
 	"backend/internal/domain"
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/logger"
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,11 +14,11 @@ import (
 )
 
 type TaskUsecase interface {
-	Create(task *domain.Task) (*domain.Task, error)
-	Get(taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
-	GetAll(userID domain.UserID) (*[]domain.Task, error)
-	Save(task *domain.Task) (*domain.Task, error)
-	Delete(taskID domain.TaskID, userID domain.UserID) error
+	Create(ctx context.Context, task *domain.Task) (*domain.Task, error)
+	Get(ctx context.Context, taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
+	GetAll(ctx context.Context, userID domain.UserID) (*[]domain.Task, error)
+	Save(ctx context.Context, task *domain.Task) (*domain.Task, error)
+	Delete(ctx context.Context, taskID domain.TaskID, userID domain.UserID) error
 }
 
 type taskHandler struct {
@@ -141,7 +142,7 @@ func (th *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	createdTask, err := th.tu.Create(task)
+	createdTask, err := th.tu.Create(c, task)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -158,7 +159,7 @@ func (th *taskHandler) GetTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	task, err := th.tu.Get(domain.TaskID(id), userID)
+	task, err := th.tu.Get(c, domain.TaskID(id), userID)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -175,7 +176,7 @@ func (th *taskHandler) GetAllTasks(c *gin.Context) {
 		return
 	}
 
-	tasks, err := th.tu.GetAll(userID)
+	tasks, err := th.tu.GetAll(c, userID)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -220,7 +221,7 @@ func (th *taskHandler) UpdateTaskById(c *gin.Context, id int) {
 
 	task := domain.ReconstructTask(domain.TaskID(id), taskName, status, userID, dl)
 
-	updatedTask, err := th.tu.Save(task)
+	updatedTask, err := th.tu.Save(c, task)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -236,7 +237,7 @@ func (th *taskHandler) DeleteTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	if err := th.tu.Delete(domain.TaskID(id), userID); err != nil {
+	if err := th.tu.Delete(c, domain.TaskID(id), userID); err != nil {
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
 		return
 	}

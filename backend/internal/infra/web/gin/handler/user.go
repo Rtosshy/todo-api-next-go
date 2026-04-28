@@ -6,14 +6,15 @@ import (
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserUsecase interface {
-	SignUp(email domain.Email, password domain.PlainPassword) (*domain.User, error)
-	Login(email domain.Email, password domain.PlainPassword) (string, error)
+	SignUp(ctx context.Context, email domain.Email, password domain.PlainPassword) (*domain.User, error)
+	Login(ctx context.Context, email domain.Email, password domain.PlainPassword) (string, error)
 }
 
 type userHandler struct {
@@ -55,14 +56,14 @@ func (uh *userHandler) PostSignUp(c *gin.Context) {
 		return
 	}
 
-	createdUser, err := uh.uu.SignUp(email, password)
+	createdUser, err := uh.uu.SignUp(c, email, password)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	tokenString, err := uh.uu.Login(email, password)
+	tokenString, err := uh.uu.Login(c, email, password)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -109,7 +110,7 @@ func (uh *userHandler) PostLogin(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := uh.uu.Login(email, password)
+	tokenString, err := uh.uu.Login(c, email, password)
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))

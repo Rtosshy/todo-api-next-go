@@ -2,7 +2,7 @@ package handler
 
 import (
 	"backend/internal/domain"
-	"backend/internal/usecase"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -13,27 +13,27 @@ type MockUserUseCase struct {
 	mock.Mock
 }
 
-func NewMockUserUseCase() usecase.UserUsecase {
+func NewMockUserUseCase() UserUsecase {
 	return &MockUserUseCase{}
 }
 
-func (m *MockUserUseCase) SignUp(user *domain.User) (*domain.User, error) {
-	args := m.Called(user)
+func (m *MockUserUseCase) SignUp(ctx context.Context, email domain.Email, password domain.PlainPassword) (*domain.User, error) {
+	args := m.Called(email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserUseCase) Login(user *domain.User) (string, error) {
-	args := m.Called(user)
+func (m *MockUserUseCase) Login(ctx context.Context, email domain.Email, password domain.PlainPassword) (string, error) {
+	args := m.Called(email)
 	if args.Get(0) == nil {
 		return "", args.Error(1)
 	}
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockUserUseCase) Save(user *domain.User) (*domain.User, error) {
+func (m *MockUserUseCase) Save(ctx context.Context, user *domain.User) (*domain.User, error) {
 	args := m.Called(user)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -41,7 +41,7 @@ func (m *MockUserUseCase) Save(user *domain.User) (*domain.User, error) {
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserUseCase) Delete(userID domain.UserID) error {
+func (m *MockUserUseCase) Delete(ctx context.Context, userID domain.UserID) error {
 	args := m.Called(userID)
 	return args.Error(0)
 }

@@ -2,8 +2,8 @@ package db_test
 
 import (
 	"backend/internal/domain"
-	"backend/internal/domain/repo"
-	"backend/internal/infra/db/postgres"
+	"backend/internal/domain/repository"
+	"backend/internal/infra/db"
 	"backend/internal/testutil"
 	"errors"
 	"regexp"
@@ -16,8 +16,8 @@ import (
 
 type TaskRepositorySuite struct {
 	testutil.DBSQLiteSuite
-	tr repo.TaskRepo
-	ur repo.UserRepo
+	tr repository.TaskRepository
+	ur repository.UserRepository
 }
 
 func TestTaskRepositorySuite(t *testing.T) {
@@ -26,20 +26,20 @@ func TestTaskRepositorySuite(t *testing.T) {
 
 func (suite *TaskRepositorySuite) SetupSuite() {
 	suite.DBSQLiteSuite.SetupSuite()
-	suite.tr = postgres.NewTaskRepository(suite.DB)
-	suite.ur = postgres.NewUserRepository(suite.DB)
+	suite.tr = db.NewTaskRepository(suite.DB)
+	suite.ur = db.NewUserRepository(suite.DB)
 }
 
 func (suite *TaskRepositorySuite) MockDB() sqlmock.Sqlmock {
 	mock, mockGormDB := testutil.MockDB()
-	suite.tr = postgres.NewTaskRepository(mockGormDB)
-	suite.ur = postgres.NewUserRepository(mockGormDB)
+	suite.tr = db.NewTaskRepository(mockGormDB)
+	suite.ur = db.NewUserRepository(mockGormDB)
 	return mock
 }
 
 func (suite *TaskRepositorySuite) AfterTest(suiteName, testName string) {
-	suite.tr = postgres.NewTaskRepository(suite.DB)
-	suite.ur = postgres.NewUserRepository(suite.DB)
+	suite.tr = db.NewTaskRepository(suite.DB)
+	suite.ur = db.NewUserRepository(suite.DB)
 }
 
 func (suite *TaskRepositorySuite) TestTaskRepositoryCRUD() {

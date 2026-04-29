@@ -1,12 +1,11 @@
 package db_test
 
 import (
-	"testing"
-
 	"backend/internal/domain"
 	"backend/internal/domain/repository"
 	"backend/internal/infra/db"
 	"backend/internal/testutil"
+	"testing"
 
 	"github.com/stretchr/testify/suite"
 )

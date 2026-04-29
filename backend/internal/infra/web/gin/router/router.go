@@ -1,8 +1,6 @@
 package router
 
 import (
-	"encoding/json"
-
 	dbpkg "backend/internal/infra/db"
 	"backend/internal/infra/web/gin/handler"
 	"backend/internal/infra/web/gin/middleware"
@@ -10,6 +8,7 @@ import (
 	"backend/internal/usecase"
 	"backend/pkg"
 	"backend/pkg/logger"
+	"encoding/json"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
@@ -75,9 +74,9 @@ func NewGinRouter(db *gorm.DB, corsAllowOrigins []string) (*gin.Engine, error) {
 			taskHandler := handler.NewTaskHandler(taskUseCase)
 
 			serverHandler := handler.NewHandler().
-				Register(csrfHandler).
-				Register(userHandler).
-				Register(taskHandler)
+			Register(csrfHandler).
+			Register(userHandler).
+			Register(taskHandler)
 
 			wrapper := presenter.ServerInterfaceWrapper{
 				Handler: serverHandler,

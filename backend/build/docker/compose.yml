@@ -1,0 +1,66 @@
+version: '3.9'
+services:
+  web:
+    image: todo-app-next-go-api:latest
+    container_name: todo-app-next-go-api
+    environment:
+      DB_USER: app
+      DB_PASSWORD: password
+      DB_DATABASE: api_database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_SSL_MODE: disable
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - api-network
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://0.0.0.0:8080/health"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+  postgres:
+    image: postgres:latest
+    container_name: todo-app-next-go-db
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: api_database
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_SSL_MODE: disable
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - api-network
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: "swagger-ui"
+    ports:
+      - "8001:8080"
+    volumes:
+      - ../../api/openapi.yaml:/openapi.yaml
+    environment:
+      SWAGGER_JSON: /openapi.yaml
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local

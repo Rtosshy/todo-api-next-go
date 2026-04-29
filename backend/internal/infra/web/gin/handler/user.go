@@ -1,14 +1,13 @@
 package handler
 
 import (
-	"context"
-	"net/http"
-
 	"backend/api"
 	"backend/internal/domain"
 	"backend/internal/infra/web/gin/presenter"
 	"backend/pkg/cookie"
 	"backend/pkg/logger"
+	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )

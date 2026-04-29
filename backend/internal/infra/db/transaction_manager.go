@@ -1,11 +1,9 @@
 package db
 
 import (
-	"context"
-
-	"gorm.io/gorm"
-
 	"backend/internal/usecase"
+	"context"
+	"gorm.io/gorm"
 )
 
 type txManager struct {

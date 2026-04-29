@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrPasswordTooShort      = errors.New("password must be at least 8 characters")
+	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
 	ErrInvalidHashedPassword = errors.New("invalid hashed password")
 )
 

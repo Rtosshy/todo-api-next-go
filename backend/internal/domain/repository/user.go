@@ -1,9 +1,8 @@
 package repository
 
 import (
-	"context"
-
 	"backend/internal/domain"
+	"context"
 )
 
 type UserRepository interface {

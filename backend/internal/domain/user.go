@@ -27,7 +27,7 @@ func ReconstructUser(id UserID, email Email, password HashedPassword, createdAt 
 	return &User{id: id, email: email, password: password, createdAt: createdAt}
 }
 
-func (u *User) ID() UserID               { return u.id }
-func (u *User) Email() Email             { return u.email }
+func (u *User) ID() UserID              { return u.id }
+func (u *User) Email() Email            { return u.email }
 func (u *User) Password() HashedPassword { return u.password }
-func (u *User) CreatedAt() time.Time     { return u.createdAt }
+func (u *User) CreatedAt() time.Time    { return u.createdAt }

@@ -1,16 +1,15 @@
 package db_test
 
 import (
-	"errors"
-	"regexp"
-	"strings"
-	"testing"
-
 	"backend/internal/domain"
 	"backend/internal/domain/repository"
 	"backend/internal/infra/db"
 	"backend/internal/testutil"
 	"backend/pkg"
+	"errors"
+	"regexp"
+	"strings"
+	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/suite"

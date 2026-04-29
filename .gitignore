@@ -1,8 +1,3 @@
 .env*
-!.env.example
 .terraform/
 terraform.*
-
-# Go build artifacts
-backend/bin/
-backend/tmp/

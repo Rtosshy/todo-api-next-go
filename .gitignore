@@ -4,6 +4,5 @@
 terraform.*
 
 # Go build artifacts
-backend/bin
-backend/bin_linux
+backend/bin/
 backend/tmp/

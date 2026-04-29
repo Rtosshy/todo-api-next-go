@@ -61,12 +61,16 @@ func NewGinRouter(db *gorm.DB, corsAllowOrigins []string) (*gin.Engine, error) {
 
 			csrfHandler := handler.NewCsrfHandler()
 
-			userRepository := dbpkg.NewUserRepository(db)
-			userUseCase := usecase.NewUserUsecase(userRepository)
+			base := dbpkg.NewBaseRepository(db)
+			txManager := dbpkg.NewTxManager(db)
+
+			userRepository := dbpkg.NewUserRepository(base)
+			userUseCase := usecase.NewUserUsecase(txManager, userRepository)
 			userHandler := handler.NewUserHandler(userUseCase)
 
-			taskRepository := dbpkg.NewTaskRepository(db)
-			taskUseCase := usecase.NewTaskUsecase(taskRepository)
+			taskRepository := dbpkg.NewTaskRepository(base)
+			statusRepository := dbpkg.NewStatusRepository(base)
+			taskUseCase := usecase.NewTaskUsecase(txManager, taskRepository, statusRepository)
 			taskHandler := handler.NewTaskHandler(taskUseCase)
 
 			serverHandler := handler.NewHandler().

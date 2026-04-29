@@ -17,104 +17,96 @@ func NewTaskRepository(b baseRepository) repository.TaskRepository {
 	return &taskRepository{b}
 }
 
-func (tr *taskRepository) getOrCreateStatus(ctx context.Context, name dao.StatusName) (dao.Status, error) {
-	var s dao.Status
-	if err := tr.db(ctx).FirstOrCreate(&s, dao.Status{Name: name}).Error; err != nil {
-		return dao.Status{}, err
-	}
-	return s, nil
-}
-
-func taskToDAO(t *domain.Task, statusID dao.StatusID) dao.Task {
+func taskToDAO(task *domain.Task, statusID dao.StatusID) dao.Task {
 	var deadline *time.Time
-	if t.Deadline() != nil {
-		v := t.Deadline().Time()
+	if task.Deadline() != nil {
+		v := task.Deadline().Time()
 		deadline = &v
 	}
 	return dao.Task{
-		ID:       dao.TaskID(t.ID()),
-		Name:     t.Name().String(),
+		ID:       dao.TaskID(task.ID()),
+		Name:     task.Name().String(),
 		StatusID: statusID,
-		UserID:   dao.UserID(t.UserID()),
+		UserID:   dao.UserID(task.UserID()),
 		Deadline: deadline,
 	}
 }
 
-func taskToEntity(d *dao.Task) (*domain.Task, error) {
-	name, err := domain.NewTaskName(d.Name)
+func taskToEntity(taskDAO *dao.Task) (*domain.Task, error) {
+	name, err := domain.NewTaskName(taskDAO.Name)
 	if err != nil {
 		return nil, err
 	}
-	statusName, err := domain.NewStatusName(string(d.Status.Name))
+	statusName, err := domain.NewStatusName(string(taskDAO.Status.Name))
 	if err != nil {
 		return nil, err
 	}
-	status := domain.Status{ID: domain.StatusID(d.Status.ID), Name: statusName}
+	status := domain.Status{ID: domain.StatusID(taskDAO.Status.ID), Name: statusName}
 
 	var deadline *domain.Deadline
-	if d.Deadline != nil {
-		dl, err := domain.NewDeadline(*d.Deadline)
+	if taskDAO.Deadline != nil {
+		dl, err := domain.NewDeadline(*taskDAO.Deadline)
 		if err != nil {
 			return nil, err
 		}
 		deadline = &dl
 	}
-	return domain.ReconstructTask(domain.TaskID(d.ID), name, status, domain.UserID(d.UserID), deadline), nil
+	return domain.ReconstructTask(domain.TaskID(taskDAO.ID), name, status, domain.UserID(taskDAO.UserID), deadline), nil
 }
 
 func (tr *taskRepository) Create(ctx context.Context, task *domain.Task) (*domain.Task, error) {
-	statusDAO, err := tr.getOrCreateStatus(ctx, dao.StatusName(task.Status().Name.String()))
-	if err != nil {
+	statusDAO := dao.Status{
+		ID:   dao.StatusID(task.Status().ID),
+		Name: dao.StatusName(task.Status().Name.String()),
+	}
+	taskDAO := taskToDAO(task, statusDAO.ID)
+	if err := tr.db(ctx).Create(&taskDAO).Error; err != nil {
 		return nil, err
 	}
-	d := taskToDAO(task, statusDAO.ID)
-	if err := tr.db(ctx).Create(&d).Error; err != nil {
-		return nil, err
-	}
-	d.Status = statusDAO
-	return taskToEntity(&d)
+	taskDAO.Status = statusDAO
+	return taskToEntity(&taskDAO)
 }
 
 func (tr *taskRepository) Get(ctx context.Context, taskID domain.TaskID, userID domain.UserID) (*domain.Task, error) {
-	var d dao.Task
+	var taskDAO dao.Task
 	if err := tr.db(ctx).Preload("Status").
 		Where("id = ? AND user_id = ?", taskID, userID).
-		First(&d).Error; err != nil {
+		First(&taskDAO).Error; err != nil {
 		return nil, err
 	}
-	return taskToEntity(&d)
+	return taskToEntity(&taskDAO)
 }
 
 func (tr *taskRepository) GetAll(ctx context.Context, userID domain.UserID) (*[]domain.Task, error) {
-	var ds []dao.Task
+	var taskDAOs []dao.Task
 	if err := tr.db(ctx).Preload("Status").
 		Where("user_id = ?", userID).
 		Order("created_at").
-		Find(&ds).Error; err != nil {
+		Find(&taskDAOs).Error; err != nil {
 		return nil, err
 	}
-	tasks := make([]domain.Task, 0, len(ds))
-	for i := range ds {
-		t, err := taskToEntity(&ds[i])
+	tasks := make([]domain.Task, 0, len(taskDAOs))
+	for i := range taskDAOs {
+		task, err := taskToEntity(&taskDAOs[i])
 		if err != nil {
 			return nil, err
 		}
-		tasks = append(tasks, *t)
+		tasks = append(tasks, *task)
 	}
 	return &tasks, nil
 }
 
 func (tr *taskRepository) Save(ctx context.Context, task *domain.Task) (*domain.Task, error) {
-	statusDAO, err := tr.getOrCreateStatus(ctx, dao.StatusName(task.Status().Name.String()))
-	if err != nil {
+	statusDAO := dao.Status{
+		ID:   dao.StatusID(task.Status().ID),
+		Name: dao.StatusName(task.Status().Name.String()),
+	}
+	taskDAO := taskToDAO(task, statusDAO.ID)
+	if err := tr.db(ctx).Save(&taskDAO).Error; err != nil {
 		return nil, err
 	}
-	d := taskToDAO(task, statusDAO.ID)
-	if err := tr.db(ctx).Save(&d).Error; err != nil {
-		return nil, err
-	}
-	d.Status = statusDAO
-	return taskToEntity(&d)
+	taskDAO.Status = statusDAO
+	return taskToEntity(&taskDAO)
 }
 
 func (tr *taskRepository) Delete(ctx context.Context, taskID domain.TaskID, userID domain.UserID) error {

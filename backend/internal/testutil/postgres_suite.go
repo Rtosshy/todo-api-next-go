@@ -1,12 +1,13 @@
 package testutil
 
 import (
-	database "backend/internal/infra/db"
-	"backend/internal/infra/db/dao"
-	"backend/pkg"
 	"context"
 	"fmt"
 	"time"
+
+	database "backend/internal/infra/db"
+	"backend/internal/infra/db/dao"
+	"backend/pkg"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"

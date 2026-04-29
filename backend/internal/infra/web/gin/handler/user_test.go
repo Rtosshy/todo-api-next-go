@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"backend/internal/domain"
 	"context"
 	"testing"
+
+	"backend/internal/domain"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

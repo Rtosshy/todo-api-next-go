@@ -1,10 +1,11 @@
 package testutil
 
 import (
-	database "backend/internal/infra/db"
-	"backend/internal/infra/db/dao"
 	"fmt"
 	"os"
+
+	database "backend/internal/infra/db"
+	"backend/internal/infra/db/dao"
 
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"

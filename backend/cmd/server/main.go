@@ -1,12 +1,6 @@
 package main
 
 import (
-	"backend/internal/infra/db"
-	"backend/internal/infra/db/dao"
-	"backend/internal/infra/web"
-	"backend/internal/infra/web/gin"
-	"backend/pkg"
-	"backend/pkg/logger"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +10,13 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"backend/internal/infra/db"
+	"backend/internal/infra/db/dao"
+	"backend/internal/infra/web"
+	"backend/internal/infra/web/gin"
+	"backend/pkg"
+	"backend/pkg/logger"
 
 	"github.com/joho/godotenv"
 )

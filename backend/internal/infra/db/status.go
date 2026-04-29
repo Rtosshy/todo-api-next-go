@@ -5,29 +5,29 @@ import (
 	"backend/internal/domain/repository"
 	"backend/internal/infra/db/dao"
 
-	"gorm.io/gorm"
+	"context"
 )
 
 type statusRepository struct {
-	db *gorm.DB
+	baseRepository
 }
 
-func NewStatusRepository(db *gorm.DB) repository.StatusRepository {
-	return &statusRepository{db: db}
+func NewStatusRepository(b baseRepository) repository.StatusRepository {
+	return &statusRepository{b}
 }
 
-func (sr *statusRepository) GetOrCreate(status *domain.Status) (*domain.Status, error) {
-	want := dao.Status{
+func (sr *statusRepository) GetOrCreate(ctx context.Context, status *domain.Status) (*domain.Status, error) {
+	wantDAO := dao.Status{
 		ID:   dao.StatusID(status.ID),
 		Name: dao.StatusName(status.Name.String()),
 	}
-	var got dao.Status
-	if err := sr.db.FirstOrCreate(&got, want).Error; err != nil {
+	var statusDAO dao.Status
+	if err := sr.db(ctx).FirstOrCreate(&statusDAO, wantDAO).Error; err != nil {
 		return nil, err
 	}
-	statusName, err := domain.NewStatusName(string(got.Name))
+	statusName, err := domain.NewStatusName(string(statusDAO.Name))
 	if err != nil {
 		return nil, err
 	}
-	return &domain.Status{ID: domain.StatusID(got.ID), Name: statusName}, nil
+	return &domain.Status{ID: domain.StatusID(statusDAO.ID), Name: statusName}, nil
 }

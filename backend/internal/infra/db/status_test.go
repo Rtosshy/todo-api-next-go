@@ -2,8 +2,8 @@ package db_test
 
 import (
 	"backend/internal/domain"
-	"backend/internal/domain/repo"
-	"backend/internal/infra/db/postgres"
+	"backend/internal/domain/repository"
+	"backend/internal/infra/db"
 	"backend/internal/testutil"
 	"testing"
 
@@ -12,7 +12,7 @@ import (
 
 type StatusRepositorySuite struct {
 	testutil.DBSQLiteSuite
-	sr repo.StatusRepo
+	sr repository.StatusRepository
 }
 
 func TestStatusRepositorySuite(t *testing.T) {
@@ -21,7 +21,7 @@ func TestStatusRepositorySuite(t *testing.T) {
 
 func (suite *StatusRepositorySuite) SetupSuite() {
 	suite.DBSQLiteSuite.SetupSuite()
-	suite.sr = postgres.NewStatusRepository(suite.DB)
+	suite.sr = db.NewStatusRepository(suite.DB)
 }
 
 func (suite *StatusRepositorySuite) TestStatus() {

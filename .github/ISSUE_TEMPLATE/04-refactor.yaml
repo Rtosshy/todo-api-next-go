@@ -1,0 +1,25 @@
+name: "♻️ リファクタリング"
+description: "コードの内部構造を改善する"
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何をリファクタリングするか
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: 背景・理由
+      description: なぜリファクタリングが必要か（可読性、保守性、パフォーマンスなど）
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: 方針
+      description: どのようにリファクタリングするか
+    validations:
+      required: false

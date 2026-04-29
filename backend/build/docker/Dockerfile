@@ -1,13 +1,20 @@
-FROM golang:1.23.0-alpine3.21
+FROM golang:1.26.2-alpine3.23 AS builder
 
-RUN apk --no-cache add curl
+WORKDIR /src
 
-WORKDIR /go/arc/web
-
-COPY . .
-
+COPY go.mod go.sum ./
 RUN go mod download
 
-RUN go build -C ./cmd/server/
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /out/server ./cmd/server
 
-CMD ["./cmd/server/server"]
+FROM alpine:3.23
+
+RUN apk --no-cache add ca-certificates curl
+
+WORKDIR /app
+COPY --from=builder /out/server /app/server
+
+EXPOSE 8080
+
+CMD ["/app/server"]

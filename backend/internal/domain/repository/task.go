@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"backend/internal/domain"
 	"context"
+
+	"backend/internal/domain"
 )
 
 type TaskRepository interface {

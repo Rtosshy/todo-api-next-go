@@ -1,23 +1,22 @@
 package handler
 
 import (
-	"backend/api"
 	"backend/internal/domain"
 	"backend/internal/infra/web/gin/presenter"
+	"backend/internal/usecase"
 	"backend/pkg/logger"
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type TaskUsecase interface {
-	Create(ctx context.Context, task *domain.Task) (*domain.Task, error)
+	Create(ctx context.Context, in usecase.CreateTaskInput) (*domain.Task, error)
 	Get(ctx context.Context, taskID domain.TaskID, userID domain.UserID) (*domain.Task, error)
 	GetAll(ctx context.Context, userID domain.UserID) (*[]domain.Task, error)
-	Save(ctx context.Context, task *domain.Task) (*domain.Task, error)
+	Save(ctx context.Context, in usecase.UpdateTaskInput) (*domain.Task, error)
 	Delete(ctx context.Context, taskID domain.TaskID, userID domain.UserID) error
 }
 
@@ -27,65 +26,6 @@ type taskHandler struct {
 
 func NewTaskHandler(tu TaskUsecase) TaskHandler {
 	return &taskHandler{tu: tu}
-}
-
-func deadlineToPresenter(d *domain.Deadline) *presenter.Deadline {
-	if d == nil {
-		return nil
-	}
-	return &presenter.Deadline{Time: d.Time()}
-}
-
-func presenterToDeadline(d *presenter.Deadline) (*domain.Deadline, error) {
-	if d == nil {
-		return nil, nil
-	}
-	dl, err := domain.NewDeadline(d.Time)
-	if err != nil {
-		return nil, err
-	}
-	return &dl, nil
-}
-
-func taskToData(task *domain.Task) presenter.Task {
-	statusID := int(task.Status().ID)
-	var deadlinePtr *time.Time
-	if d := task.Deadline(); d != nil {
-		t := d.Time()
-		deadlinePtr = &t
-	}
-	var presenterDeadline *presenter.Deadline
-	if deadlinePtr != nil {
-		presenterDeadline = &presenter.Deadline{Time: *deadlinePtr}
-	}
-	return presenter.Task{
-		Kind: "task",
-		Id:   int(task.ID()),
-		Name: task.Name().String(),
-		Status: presenter.Status{
-			Id:   &statusID,
-			Name: presenter.StatusName(task.Status().Name.String()),
-		},
-		Deadline: presenterDeadline,
-	}
-}
-
-func taskToResponse(task *domain.Task) presenter.TaskResponse {
-	return presenter.TaskResponse{
-		ApiVersion: api.Version,
-		Data:       taskToData(task),
-	}
-}
-
-func tasksToResponse(tasks *[]domain.Task) presenter.TasksResponse {
-	data := make([]presenter.Task, len(*tasks))
-	for i, task := range *tasks {
-		data[i] = taskToData(&task)
-	}
-	return presenter.TasksResponse{
-		ApiVersion: api.Version,
-		Data:       data,
-	}
 }
 
 func getUserIDFromContext(c *gin.Context) (domain.UserID, error) {
@@ -104,22 +44,6 @@ func getUserIDFromContext(c *gin.Context) (domain.UserID, error) {
 	return domain.UserID(userIDFloat), nil
 }
 
-func buildTaskFromRequest(name string, statusName string, userID domain.UserID, deadline *presenter.Deadline) (*domain.Task, error) {
-	taskName, err := domain.NewTaskName(name)
-	if err != nil {
-		return nil, err
-	}
-	status, err := domain.NewStatus(statusName)
-	if err != nil {
-		return nil, err
-	}
-	dl, err := presenterToDeadline(deadline)
-	if err != nil {
-		return nil, err
-	}
-	return domain.NewTask(taskName, status, userID, dl)
-}
-
 func (th *taskHandler) CreateTask(c *gin.Context) {
 	var requestBody presenter.CreateTaskRequestBody
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
@@ -135,14 +59,7 @@ func (th *taskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 
-	task, err := buildTaskFromRequest(requestBody.Name, string(requestBody.Status.Name), userID, requestBody.Deadline)
-	if err != nil {
-		logger.Warn(err.Error())
-		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
-		return
-	}
-
-	createdTask, err := th.tu.Create(c, task)
+	createdTask, err := th.tu.Create(c, toCreateTaskInput(requestBody, userID))
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))
@@ -200,28 +117,7 @@ func (th *taskHandler) UpdateTaskById(c *gin.Context, id int) {
 		return
 	}
 
-	taskName, err := domain.NewTaskName(requestBody.Name)
-	if err != nil {
-		logger.Warn(err.Error())
-		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
-		return
-	}
-	status, err := domain.NewStatus(string(requestBody.Status.Name))
-	if err != nil {
-		logger.Warn(err.Error())
-		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
-		return
-	}
-	dl, err := presenterToDeadline(requestBody.Deadline)
-	if err != nil {
-		logger.Warn(err.Error())
-		c.JSON(presenter.NewErrorResponse(http.StatusBadRequest, err.Error()))
-		return
-	}
-
-	task := domain.ReconstructTask(domain.TaskID(id), taskName, status, userID, dl)
-
-	updatedTask, err := th.tu.Save(c, task)
+	updatedTask, err := th.tu.Save(c, toUpdateTaskInput(requestBody, domain.TaskID(id), userID))
 	if err != nil {
 		logger.Error(err.Error())
 		c.JSON(presenter.NewErrorResponse(http.StatusInternalServerError, err.Error()))

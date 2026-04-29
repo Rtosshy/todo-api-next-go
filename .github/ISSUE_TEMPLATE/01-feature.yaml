@@ -1,0 +1,18 @@
+name: "💡 機能追加リクエスト"
+description: "新機能を提案する"
+labels: ["feature"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: どんな機能が欲しいか
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: 方針
+      description: 大まかな実装方針を記述してください
+    validations:
+      required: true

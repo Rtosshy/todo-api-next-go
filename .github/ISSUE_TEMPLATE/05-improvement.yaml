@@ -1,0 +1,18 @@
+name: "✨ 改善"
+description: "既存機能の改善やUX向上を提案する"
+labels: ["improvement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何を改善したいか
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: 背景・理由
+      description: なぜこの改善が必要か
+    validations:
+      required: false

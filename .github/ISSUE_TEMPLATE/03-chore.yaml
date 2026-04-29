@@ -1,0 +1,18 @@
+name: "🔧 雑務タスク"
+description: "CI整備、依存関係の更新、設定変更などの雑務タスク"
+labels: ["chore"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何をするか
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: 背景・理由
+      description: なぜこのタスクが必要か
+    validations:
+      required: false

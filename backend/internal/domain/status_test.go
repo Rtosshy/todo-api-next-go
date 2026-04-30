@@ -46,7 +46,9 @@ func TestStatusName_Constants(t *testing.T) {
 }
 
 func TestStatusName_Equals(t *testing.T) {
-	assert.True(t, domain.StatusNameTodo.Equals(domain.StatusNameTodo))
+	todo, err := domain.NewStatusName("todo")
+	assert.NoError(t, err)
+	assert.True(t, domain.StatusNameTodo.Equals(todo))
 	assert.False(t, domain.StatusNameTodo.Equals(domain.StatusNameDone))
 }
 

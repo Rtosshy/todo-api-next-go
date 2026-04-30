@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -15,8 +14,14 @@ func GetEndpoint(path string) string {
 	if env == "stage" {
 		baseURL = "http://stage.localhost:8080"
 	}
-	p, _ := url.Parse(path)
-	b, _ := url.Parse(baseURL)
+	p, err := url.Parse(path)
+	if err != nil {
+		return ""
+	}
+	b, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
 	return b.ResolveReference(p).String()
 }
 
@@ -32,7 +37,7 @@ func WaitForPort(host, port string, timeout time.Duration) bool {
 }
 
 func CheckPort(host, port string) bool {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
 	if conn != nil {
 		conn.Close()
 		return false

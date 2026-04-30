@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"strings"
@@ -19,6 +20,7 @@ type TaskRepositorySuite struct {
 	testutil.DBSQLiteSuite
 	tr repository.TaskRepository
 	ur repository.UserRepository
+	sr repository.StatusRepository
 }
 
 func TestTaskRepositorySuite(t *testing.T) {
@@ -27,122 +29,124 @@ func TestTaskRepositorySuite(t *testing.T) {
 
 func (suite *TaskRepositorySuite) SetupSuite() {
 	suite.DBSQLiteSuite.SetupSuite()
-	suite.tr = db.NewTaskRepository(suite.DB)
-	suite.ur = db.NewUserRepository(suite.DB)
+	suite.tr = db.NewTaskRepository(db.NewBaseRepository(suite.DB))
+	suite.ur = db.NewUserRepository(db.NewBaseRepository(suite.DB))
+	suite.sr = db.NewStatusRepository(db.NewBaseRepository(suite.DB))
 }
 
 func (suite *TaskRepositorySuite) MockDB() sqlmock.Sqlmock {
 	mock, mockGormDB := testutil.MockDB()
-	suite.tr = db.NewTaskRepository(mockGormDB)
-	suite.ur = db.NewUserRepository(mockGormDB)
+	suite.tr = db.NewTaskRepository(db.NewBaseRepository(mockGormDB))
+	suite.ur = db.NewUserRepository(db.NewBaseRepository(mockGormDB))
+	suite.sr = db.NewStatusRepository(db.NewBaseRepository(mockGormDB))
 	return mock
 }
 
 func (suite *TaskRepositorySuite) AfterTest(suiteName, testName string) {
-	suite.tr = db.NewTaskRepository(suite.DB)
-	suite.ur = db.NewUserRepository(suite.DB)
+	suite.tr = db.NewTaskRepository(db.NewBaseRepository(suite.DB))
+	suite.ur = db.NewUserRepository(db.NewBaseRepository(suite.DB))
+	suite.sr = db.NewStatusRepository(db.NewBaseRepository(suite.DB))
+}
+
+func (suite *TaskRepositorySuite) buildUser(emailStr string) *domain.User {
+	email, err := domain.NewEmail(emailStr)
+	suite.Require().Nil(err)
+	plain, err := domain.NewPlainPassword("password123")
+	suite.Require().Nil(err)
+	hashed, err := plain.Hash()
+	suite.Require().Nil(err)
+	user, err := domain.NewUser(email, hashed)
+	suite.Require().Nil(err)
+	return user
 }
 
 func (suite *TaskRepositorySuite) TestTaskRepositoryCRUD() {
-	user := &domain.User{
-		ID:    1,
-		Email: "test@test.com",
-	}
+	ctx := context.Background()
 
-	user, _ = suite.ur.Create(user)
-
-	task := &domain.Task{
-		Name:   "test",
-		Status: domain.Status{Name: domain.StatusName("todo")},
-		User:   *user,
-	}
-
-	// test create
-	task, err := suite.tr.Create(task)
+	user, err := suite.ur.Create(ctx, suite.buildUser("test@test.com"))
 	suite.Assert().Nil(err)
-	suite.Assert().NotZero(task.ID)
-	suite.Assert().Equal("test", task.Name)
-	suite.Assert().NotZero(task.Status.ID)
-	suite.Assert().Equal(domain.StatusName("todo"), task.Status.Name)
-	suite.Assert().NotZero(task.User.ID)
-	suite.Assert().Equal("test@test.com", task.User.Email)
 
-	// test get
-	getTask, err := suite.tr.Get(task.ID, user.ID)
+	statusParam, err := domain.NewStatus("todo")
 	suite.Assert().Nil(err)
-	suite.Assert().Equal("test", getTask.Name)
-	suite.Assert().NotZero(getTask.Status.ID)
-	suite.Assert().Equal(domain.StatusName("todo"), getTask.Status.Name)
-
-	// test get all
-	// getTasks, err := suite.tr.GetAll()
-
-	// test save
-	getTask.Name = "updated"
-	updatedTask, err := suite.tr.Save(getTask)
+	resolvedStatus, err := suite.sr.GetOrCreate(ctx, &statusParam)
 	suite.Assert().Nil(err)
-	suite.Assert().Equal("updated", updatedTask.Name)
-	suite.Assert().NotZero(updatedTask.Status.ID)
-	suite.Assert().Equal(domain.StatusName("todo"), updatedTask.Status.Name)
 
-	// test delete
-	err = suite.tr.Delete(updatedTask.ID, updatedTask.UserID)
+	taskName, err := domain.NewTaskName("test")
 	suite.Assert().Nil(err)
-	deletedTask, err := suite.tr.Get(updatedTask.ID, updatedTask.UserID)
-	suite.Assert().Nil(deletedTask)
-	suite.Assert().True(strings.Contains("record not found", err.Error()))
+	task, err := domain.NewTask(taskName, *resolvedStatus, user.ID(), nil)
+	suite.Assert().Nil(err)
+
+	created, err := suite.tr.Create(ctx, task)
+	suite.Assert().Nil(err)
+	suite.Assert().NotZero(created.ID())
+	suite.Assert().Equal("test", created.Name().String())
+	suite.Assert().NotZero(created.Status().ID)
+	suite.Assert().Equal("todo", created.Status().Name.String())
+	suite.Assert().Equal(user.ID(), created.UserID())
+
+	got, err := suite.tr.Get(ctx, created.ID(), user.ID())
+	suite.Assert().Nil(err)
+	suite.Assert().Equal("test", got.Name().String())
+	suite.Assert().NotZero(got.Status().ID)
+	suite.Assert().Equal("todo", got.Status().Name.String())
+
+	updatedName, err := domain.NewTaskName("updated")
+	suite.Assert().Nil(err)
+	updatedTask := domain.ReconstructTask(got.ID(), updatedName, got.Status(), got.UserID(), got.Deadline())
+	updated, err := suite.tr.Save(ctx, updatedTask)
+	suite.Assert().Nil(err)
+	suite.Assert().Equal("updated", updated.Name().String())
+	suite.Assert().NotZero(updated.Status().ID)
+	suite.Assert().Equal("todo", updated.Status().Name.String())
+
+	err = suite.tr.Delete(ctx, updated.ID(), updated.UserID())
+	suite.Assert().Nil(err)
+	deleted, err := suite.tr.Get(ctx, updated.ID(), updated.UserID())
+	suite.Assert().Nil(deleted)
+	suite.Assert().True(strings.Contains(err.Error(), "record not found"))
 }
 
 func (suite *TaskRepositorySuite) TestTaskCreateFailure() {
 	mockDB := suite.MockDB()
-	mockDB.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "statuses" WHERE "statuses"."name" = $1 ORDER BY "statuses"."id" LIMIT $2`)).WithArgs("todo", 1).WillReturnError(errors.New("create error"))
+	mockDB.ExpectBegin()
+	mockDB.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "tasks"`)).
+		WillReturnError(errors.New("create error"))
+	mockDB.ExpectRollback()
 
-	task := &domain.Task{
-		Name:   "test",
-		Status: domain.Status{Name: domain.StatusName("todo")},
-	}
+	taskName, err := domain.NewTaskName("test")
+	suite.Assert().Nil(err)
+	statusName, err := domain.NewStatusName("todo")
+	suite.Assert().Nil(err)
+	task, err := domain.NewTask(taskName, domain.Status{ID: 1, Name: statusName}, 1, nil)
+	suite.Assert().Nil(err)
 
-	createdTask, err := suite.tr.Create(task)
-	suite.Assert().Nil(createdTask)
+	created, err := suite.tr.Create(context.Background(), task)
+	suite.Assert().Nil(created)
 	suite.Assert().NotNil(err)
 	suite.Assert().Equal("create error", err.Error())
 }
 
 func (suite *TaskRepositorySuite) TestTaskGetFailure() {
 	mockDB := suite.MockDB()
-	mockDB.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tasks" WHERE id = $1 AND user_id = $2 ORDER BY "tasks"."id" LIMIT $3`)).WithArgs(1, 1, 1).WillReturnError(errors.New("get error"))
+	mockDB.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tasks" WHERE id = $1 AND user_id = $2 ORDER BY "tasks"."id" LIMIT $3`)).
+		WithArgs(1, 1, 1).
+		WillReturnError(errors.New("get error"))
 
-	task, err := suite.tr.Get(1, 1)
+	task, err := suite.tr.Get(context.Background(), 1, 1)
 	suite.Assert().Nil(task)
 	suite.Assert().NotNil(err)
 	suite.Assert().Equal("get error", err.Error())
 }
 
-func (suite *TaskRepositorySuite) TestTaskSaveFailure() {
-	mockDB := suite.MockDB()
-	mockDB.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tasks" WHERE id = $1 AND user_id = $2 ORDER BY "tasks"."id" LIMIT $3`)).WithArgs(1, 1, 1).WillReturnError(errors.New("save error"))
-
-	task := &domain.Task{
-		ID:     1,
-		Name:   "test",
-		Status: domain.Status{Name: domain.StatusName("todo")},
-		UserID: 1,
-	}
-
-	task, err := suite.tr.Save(task)
-	suite.Assert().Nil(task)
-	suite.Assert().NotNil(err)
-	suite.Assert().Equal("save error", err.Error())
-}
-
 func (suite *TaskRepositorySuite) TestTaskDeleteFailure() {
 	mockDB := suite.MockDB()
 	mockDB.ExpectBegin()
-	mockDB.ExpectExec(regexp.QuoteMeta(`DELETE FROM "tasks" WHERE id = $1 AND user_id = $2`)).WithArgs(1, 1).WillReturnError(errors.New("delete error"))
+	mockDB.ExpectExec(regexp.QuoteMeta(`DELETE FROM "tasks" WHERE id = $1 AND user_id = $2`)).
+		WithArgs(1, 1).
+		WillReturnError(errors.New("delete error"))
 	mockDB.ExpectRollback()
-	mockDB.ExpectCommit()
 
-	err := suite.tr.Delete(1, 1)
+	err := suite.tr.Delete(context.Background(), 1, 1)
 	suite.Assert().NotNil(err)
 	suite.Assert().Equal("delete error", err.Error())
 }

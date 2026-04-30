@@ -1,9 +1,10 @@
 package handler
 
 import (
-	"backend/internal/domain"
 	"context"
 	"testing"
+
+	"backend/internal/domain"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -48,7 +49,7 @@ func (m *MockUserUseCase) Delete(ctx context.Context, userID domain.UserID) erro
 
 type UserHandlerSuite struct {
 	suite.Suite
-	uh UserHandler
+	// uh UserHandler
 }
 
 func TestUserHandlerTestSuite(t *testing.T) {

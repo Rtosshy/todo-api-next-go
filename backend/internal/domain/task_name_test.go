@@ -1,9 +1,10 @@
 package domain_test
 
 import (
-	"backend/internal/domain"
 	"strings"
 	"testing"
+
+	"backend/internal/domain"
 
 	"github.com/stretchr/testify/assert"
 )

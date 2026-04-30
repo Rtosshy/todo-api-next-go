@@ -193,7 +193,7 @@ WEB_CORS_ALLOW_ORIGINS=http://<frontend-server-dns>
 make build-linux
 
 # EC2にアップロード
-scp -i <key-file>.pem bin_linux ec2-user@<backend-ip>:~/todo-app-next-go/backend
+scp -i <key-file>.pem bin/server-linux ec2-user@<backend-ip>:~/todo-app-next-go/backend/bin/
 ```
 
 EC2 で直接ビルド(時間がかかる)
@@ -202,14 +202,14 @@ EC2 で直接ビルド(時間がかかる)
 # EC2で
 cd ~/todo-app-next-go/backend
 go mod download
-go build -o bin_linux ./cmd/server/main.go
+go build -o bin/server-linux ./cmd/server/main.go
 ```
 
 #### 6. 動作確認(テスト起動)
 
 ```bash
 # テスト起動
-APP_ENV=production ./bin_linux
+APP_ENV=production ./bin/server-linux
 
 # 別のターミナルでテスト
 curl http://localhost:8080/api
@@ -233,7 +233,7 @@ Type=simple
 User=ec2-user
 WorkingDirectory=/home/ec2-user/todo-app-next-go/backend
 Environment="APP_ENV=production"
-ExecStart=/home/ec2-user/todo-app-next-go/backend/bin_linux
+ExecStart=/home/ec2-user/todo-app-next-go/backend/bin/server-linux
 Restart=always
 RestartSec=10
 

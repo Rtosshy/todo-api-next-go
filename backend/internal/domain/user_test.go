@@ -1,9 +1,10 @@
 package domain_test
 
 import (
-	"backend/internal/domain"
-	"backend/pkg"
 	"testing"
+
+	"backend/internal/domain"
+	"backend/internal/testutil"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,7 +55,7 @@ func TestNewUser(t *testing.T) {
 }
 
 func TestReconstructUser(t *testing.T) {
-	now := pkg.Str2time("2025-01-01")
+	now := testutil.MustDate(t, "2025-01-01")
 	email := validEmail(t)
 	hashed := validHashedPassword(t)
 

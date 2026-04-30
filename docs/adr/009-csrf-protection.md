@@ -1,4 +1,4 @@
-# 002 GORM
+# 009 CSRF Protection
 
 - Status: Proposed
 - Date: 2026-04-30

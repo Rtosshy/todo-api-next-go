@@ -1,29 +1,59 @@
-# [タイトル]
+# [ADR番号] [タイトル]
 
-## 背景・課題 (Background/Problem)
-<!-- 背景や課題を箇条書きで記述する -->
-- 
+- Status: Proposed | Accepted | Deprecated | Superseded
+- Date: YYYY-MM-DD
+- Supersedes: [ADR番号 or None]
+- Superseded by: [ADR番号 or None]
 
-## 決定事項 (Decision)
-<!-- 決定内容を簡潔に記述する -->
-- 
+## Context
 
-### 理由 (Reasons)
-<!-- 決定に至った理由を箇条書きで記述する -->
-- 
+<!--
+なぜこの決定が必要になったのか。
+前提、制約、課題を書く。
+-->
 
-### 受け入れるトレードオフ (Accepted Trade-offs)
-<!-- この決定によって生じるトレードオフを記述する -->
-- 
+-
 
-## 検討した別の選択肢 (Alternatives Considered)
-<!-- 採用しなかった選択肢とそのメリット・デメリット -->
-- 
+## Decision
 
-## 参考 (References)
-<!-- 参考資料やリンク -->
-- 
+<!--
+何を決めたのか。
+できるだけ短く、明確に書く。
+-->
 
-## 議論 (Discussion)
-<!-- 決定に至るまでの議論内容 -->
-- 
+-
+
+## Rationale
+
+<!--
+なぜその決定にしたのか。
+判断基準、重視したことを書く。
+-->
+
+-
+
+## Consequences
+
+<!--
+この決定によって起きる影響を書く。
+良い影響だけでなく、受け入れる制約や運用負荷も書く。
+-->
+
+-
+
+## Alternatives Considered
+
+<!--
+検討したが採用しなかった選択肢を書く。
+それぞれを不採用にした理由も書く。
+-->
+
+-
+
+## References
+
+<!--
+参考資料、Issue、PR、公式ドキュメントなど。
+-->
+
+-

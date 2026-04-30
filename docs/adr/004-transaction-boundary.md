@@ -1,4 +1,4 @@
-# 002 GORM
+# 004 Transaction Boundary
 
 - Status: Proposed
 - Date: 2026-04-30

@@ -1,4 +1,4 @@
-# 002 GORM
+# 005 Backend Architecture
 
 - Status: Proposed
 - Date: 2026-04-30

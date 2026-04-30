@@ -1,4 +1,4 @@
-# 002 GORM
+# 008 Authentication
 
 - Status: Proposed
 - Date: 2026-04-30

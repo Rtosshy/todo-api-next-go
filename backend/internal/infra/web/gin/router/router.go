@@ -29,7 +29,10 @@ func setupSwagger(router *gin.Engine) (*openapi3.T, error) {
 
 	env := pkg.GetEnvDefault("APP_ENV", "development")
 	if env == "development" {
-		swaggerJson, _ := json.Marshal(swagger)
+		swaggerJson, err := json.Marshal(swagger)
+		if err != nil {
+			return nil, err
+		}
 		var SwaggerInfo = &swag.Spec{
 			InfoInstanceName: "swagger",
 			SwaggerTemplate:  string(swaggerJson),

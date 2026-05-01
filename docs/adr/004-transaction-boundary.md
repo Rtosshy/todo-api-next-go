@@ -66,15 +66,75 @@
 それぞれを不採用にした理由も書く。
 -->
 
-- トランザクション用のリポジトリメソッドを用意する: ユースケースの数だけリポジトリメソッドが肥大化
-  - コード例
-- unit of work: 今回だと複雑すぎる
-  - コード例
-- リポジトリ層で境界を引く: 複数リポジトリにまたがる整合性を表現できず不採用
-  - コード例
-- ユースケース層でトランザクション処理を直接呼び出す: usecaseにdbの処理を書く必要がある
-  - コード例
-- `*gorm.DB` を引数で引き回す: usecase/repositoryのシグネチャがGORMに汚染されるため不採用
+- トランザクション用のリポジトリメソッドを用意する: ユースケースごとに専用メソッドが必要になり、ユースケース数に比例してリポジトリが肥大化する。リポジトリがアプリケーションロジックを抱えてしまい、ユースケース層が薄くなる
+  ```go
+  // リポジトリ側に「Task作成 + Status解決」をまとめて閉じ込める形
+  func (r *taskRepository) CreateWithStatus(ctx context.Context, task *domain.Task, status *domain.Status) (*domain.Task, error) {
+      var created *domain.Task
+      err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+          // ここに Status の GetOrCreate と Task の Create が同居する
+          return nil
+      })
+      return created, err
+  }
+  ```
+
+- Unit of Work（RepositoryManagerを介して同一トランザクションを共有するリポジトリ群を一括で扱う）: トランザクション境界とリポジトリ群を一括で表現できるが、Manager / Factory / ジェネリクスによる抽象が必要で、本リポジトリの規模に対して構成が重い（参考: GREE Tech Blog）
+  ```go
+  // application層: UoWとRepositoryManagerのインターフェース
+  type TaskCreateRepoManager interface {
+      TaskRepository() repository.TaskRepository
+      StatusRepository() repository.StatusRepository
+  }
+
+  type UnitOfWork[T any] interface {
+      DoInTx(ctx context.Context, fn func(ctx context.Context, repoManager T) error) error
+  }
+
+  // infra層: db.Transactionの中でtxを共有したRepositoryManagerをfactoryで組み立てる
+  type unitOfWork[T any] struct {
+      db      *gorm.DB
+      factory func(db *gorm.DB) T
+  }
+
+  func (u *unitOfWork[T]) DoInTx(ctx context.Context, fn func(ctx context.Context, repoManager T) error) error {
+      return u.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+          return fn(ctx, u.factory(tx))
+      })
+  }
+
+  // ユースケース側
+  func (tu *taskUsecase) Create(ctx context.Context, in CreateTaskInput) (*domain.Task, error) {
+      return tu.uow.DoInTx(ctx, func(ctx context.Context, rm TaskCreateRepoManager) error {
+          status, err := rm.StatusRepository().GetOrCreate(ctx, ...)
+          if err != nil {
+              return err
+          }
+          _, err = rm.TaskRepository().Create(ctx, ...)
+          return err
+      })
+  }
+  ```
+
+- ユースケースで `db.Transaction` を直接呼び、得られたtxをリポジトリに渡すDIパターン: 関数シグネチャからトランザクション参加が明示される利点はあるが、ユースケースが `*gorm.DB` に直接依存し、リポジトリのインターフェースにも `tx *gorm.DB` が現れることでusecase/domainの抽象がGORMに汚染される。トランザクション制御の差し替えも難しくなる
+  ```go
+  // リポジトリのインターフェースに tx が露出する
+  type TaskRepository interface {
+      Create(ctx context.Context, tx *gorm.DB, task *domain.Task) (*domain.Task, error)
+  }
+
+  // ユースケースが *gorm.DB を直接知り、tx を引数として配り回す
+  func (tu *taskUsecase) Create(ctx context.Context, in CreateTaskInput) (*domain.Task, error) {
+      return tu.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+          status, err := tu.sr.GetOrCreate(ctx, tx, ...)
+          if err != nil {
+              return err
+          }
+          _, err = tu.tr.Create(ctx, tx, ...)
+          return err
+      })
+  }
+  ```
 
 ## References
 
@@ -82,9 +142,8 @@
 参考資料、Issue、PR、公式ドキュメントなど。
 -->
 
-- トランザクションの書き方の記事二つ
-- からまるさんのやつ
-- greeeのやつ
+- Goのトランザクション管理パターン (GREE Tech): https://tech.gree-x.com/golang-transaction-pattern/
+- レイヤードアーキテクチャにおけるトランザクション (karamaru-alpha): https://karamaru-alpha.com/posts/layered-tx/
 - GORM Transactions: https://gorm.io/docs/transactions.html
 - 関連ADR: [002-gorm.md](./002-gorm.md), [005-backend-architecture.md](./005-backend-architecture.md)
 - 実装: `backend/internal/usecase/transaction_manager.go`, `backend/internal/infra/db/transaction_manager.go`, `backend/internal/infra/db/context.go`, `backend/internal/infra/db/base_repository.go`

@@ -1,6 +1,6 @@
 # 006 PostgreSQL
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-04-30
 - Supersedes: None
 - Superseded by: None
@@ -12,7 +12,10 @@
 前提、制約、課題を書く。
 -->
 
--
+- todo appのデータを永続化する必要がある
+- DBが必要になる
+- 今回のユースケースにあったデータストアが必要
+- 学生の身分で無料ホスティングを備えているDBだから
 
 ## Decision
 
@@ -21,7 +24,7 @@
 できるだけ短く、明確に書く。
 -->
 
--
+- DBにPostgreSQLを使用する
 
 ## Rationale
 
@@ -30,7 +33,7 @@
 判断基準、重視したことを書く。
 -->
 
--
+- 将来の拡張性も踏まえて高機能なデータストアである必要がある
 
 ## Consequences
 
@@ -48,7 +51,10 @@
 それぞれを不採用にした理由も書く。
 -->
 
--
+- MySQL
+- SQLite
+- Redis
+- NoSQL
 
 ## References
 
